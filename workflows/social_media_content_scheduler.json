@@ -1,0 +1,205 @@
+{
+  "name": "Social Media Content Scheduler",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 10
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8a2f2fc5-f148-4cbe-96e2-ab7c5b0b184b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "getAll",
+        "databaseId": {
+          "__rl": true,
+          "value": "24e80325-7122-80aa-bb3f-c899f3eeb4da",
+          "mode": "list",
+          "cachedResultName": "n8n Content",
+          "cachedResultUrl": "https://www.notion.so/24e80325712280aabb3fc899f3eeb4da"
+        },
+        "filterType": "manual",
+        "filters": {
+          "conditions": [
+            {
+              "key": "Status|select",
+              "condition": "equals",
+              "selectValue": "Ready to Publish"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        200,
+        0
+      ],
+      "id": "7fb31467-35b3-409a-8976-ff32c971c2e7",
+      "name": "getContents",
+      "credentials": {
+        "notionApi": {
+          "id": "nAigdQ3c18dblh0C",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v22.0",
+        "node": "=320381164501657",
+        "edge": "feed",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "message",
+                "value": "={{ $json.content }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        580,
+        0
+      ],
+      "id": "22a9c9ad-5f9a-41d8-b4e1-28f818f67e69",
+      "name": "postOnFacebook",
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "MKdhLLOEKfZLh6B8",
+          "name": "Facebook Graph account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "operation": "update",
+        "pageId": {
+          "__rl": true,
+          "value": "={{ $('getContents').item.json.id }}",
+          "mode": "id"
+        },
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Status|select",
+              "selectValue": "Published"
+            },
+            {
+              "key": "Published|checkbox",
+              "checkboxValue": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        780,
+        0
+      ],
+      "id": "834b17e6-6d43-4694-9242-0f7bd544456f",
+      "name": "updateToPublished",
+      "credentials": {
+        "notionApi": {
+          "id": "nAigdQ3c18dblh0C",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"content\": \"{{ $json.property_title }}\\n{{ $json.property_content }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        380,
+        0
+      ],
+      "id": "7f675925-4c6a-43d5-8d86-80189ac01404",
+      "name": "setContents"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "getContents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getContents": {
+      "main": [
+        [
+          {
+            "node": "setContents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "postOnFacebook": {
+      "main": [
+        [
+          {
+            "node": "updateToPublished",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "setContents": {
+      "main": [
+        [
+          {
+            "node": "postOnFacebook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1dd16363-c966-4a47-ab85-3daa51eafea7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5b843168245ecaba419690e686a6f2aaf0ed5bd1048c39621c54dfae7d3a9ce0"
+  },
+  "id": "HLtayljVCepxpXxw",
+  "tags": []
+}
