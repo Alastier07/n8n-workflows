@@ -12,6 +12,17 @@ You’re in the right place!
 
 ---
 
-## 📂 What You’ll Find
+Workflows are organized by category in the `workflows/` folder.
 
-Workflows are organized by category in the `workflows/` folder:
+## 🚀 Getting Started
+
+1. Clone or download this repo:
+   ```bash
+   git clone https://github.com/your-username/n8n-workflow-showcase.git
+   cd n8n-workflow-showcase
+
+2. Import a workflow into your n8n instance:
+   ```bash
+   n8n import:workflow --input=workflows/automation/daily-report.json
+   
+3. Tweak and activate it to fit your needs!
