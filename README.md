@@ -18,11 +18,11 @@ Workflows are organized by category in the `workflows/` folder.
 
 1. Clone or download this repo:
    ```bash
-   git clone https://github.com/your-username/n8n-workflow-showcase.git
-   cd n8n-workflow-showcase
+   git clone https://github.com/Alastier07/n8n-workflows.git
+   cd n8n-workflows
 
 2. Import a workflow into your n8n instance:
    ```bash
-   n8n import:workflow --input=workflows/automation/daily-report.json
+   n8n import:workflow --input=workflows/automation/[filename].json
    
 3. Tweak and activate it to fit your needs!
