@@ -1,0 +1,187 @@
+{
+  "name": "Daily Weather Email Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "llama3.2:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmOllama",
+      "typeVersion": 1,
+      "position": [
+        420,
+        160
+      ],
+      "id": "26c78b13-a943-4a7c-8c7b-7fec0e058150",
+      "name": "Ollama Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "PCVeu3FKGA7TkV2R",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://weatherapi-com.p.rapidapi.com/current.json?q=ormoc",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "65aaec1a-d6e2-461c-836e-4073a39a9e60",
+      "name": "Weather API via RapidAPI",
+      "credentials": {
+        "httpCustomAuth": {
+          "id": "4N1WCC6p4hkeFWQY",
+          "name": "Custom Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an assistant that writes short daily weather email digests.\n\nTask:\n1. Summarize only the **important details**:\n   - Date {{ $json.location.localtime }}\n   - Location {{ $json.location.name }}\n   - Weather condition (e.g., sunny, cloudy, rainy, etc.) {{ $json.current.condition.text }}\n   - Temperature (current, high, low if available) {{ $json.current.temp_c }}\n   - Feels like {{ $json.current.feelslike_c }}\n   - Humidity {{ $json.current.humidity }}\n   - Wind speed {{ $json.current.wind_kph }}\n   - Chance of rain (if available) {{ $json.current.cloud }}\n2. Convert the data into a **friendly, easy-to-read email format**.\n3. Keep it concise, professional, and formatted with sections.\n4. Generate a clear **subject** and **message body** for a daily weather email.\n5. Dont make the **message body** value to json format just follow the example result.\n6. Return the result strictly in JSON format.\n\nExample Output:\n{\n  \"subject\": \"☀️ Daily Weather Digest – Manila, 2025-08-18\",\n  \"message\": \"Hello! Here’s today’s weather update for Manila (2025-08-18):\\n\\n🌡 Temperature: 30°C (Feels like 33°C)\\n🌤 Condition: Scattered Clouds\\n📈 High: 32°C | 📉 Low: 27°C\\n💧 Humidity: 70%\\n💨 Wind: 12 km/h\\n☔ Chance of Rain: 10%\\n\\nHave a great day ahead!\\n– Your Daily Weather Digest\"\n}\n\nImportant: Return only the JSON object. Do not add any text outside of it.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        420,
+        0
+      ],
+      "id": "1ba8a149-1967-4e41-9c34-db4ae7e0d212",
+      "name": "Email Generator"
+    },
+    {
+      "parameters": {
+        "jsCode": "try {\n  const raw = $input.first().json.text; // LLM output\n  const cleaned = raw.replace(/```json|```/g, '').trim(); // remove code fences if present\n  return [{ json: JSON.parse(cleaned) }];\n} catch (e) {\n  return [{ json: { error: 'Invalid JSON', raw: $input.first().json.text }}];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        0
+      ],
+      "id": "d9f7b1cc-376a-4e8c-8df0-7ee6bbea2dfc",
+      "name": "JSON Parse Code"
+    },
+    {
+      "parameters": {
+        "sendTo": "calastier07@gmail.com",
+        "subject": "={{ $json.subject }}",
+        "emailType": "text",
+        "message": "={{ $json.message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        920,
+        0
+      ],
+      "id": "7d5a7013-4eb9-4970-a42e-4c17aa71b249",
+      "name": "Send Email",
+      "webhookId": "237324ea-0c23-43ef-8e65-a1283078b34b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kDS2C1yxTpq7TtLP",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 5
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a67f1c11-b367-4590-9156-9644276e1544",
+      "name": "5 AM Schedule"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Ollama Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Weather API via RapidAPI": {
+      "main": [
+        [
+          {
+            "node": "Email Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Generator": {
+      "main": [
+        [
+          {
+            "node": "JSON Parse Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "JSON Parse Code": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5 AM Schedule": {
+      "main": [
+        [
+          {
+            "node": "Weather API via RapidAPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e46e1d37-cabe-46cd-bf8a-2e78a854442b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5b843168245ecaba419690e686a6f2aaf0ed5bd1048c39621c54dfae7d3a9ce0"
+  },
+  "id": "uVaS9vPe9MngERpB",
+  "tags": []
+}
